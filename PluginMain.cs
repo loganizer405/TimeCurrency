@@ -119,26 +119,17 @@ namespace TimeCurrency
                 LastCheck = DateTime.UtcNow;
                 foreach(TSPlayer player in TShock.Players)
                 {
-
-
                     if (lasttileX[player.Index] != 0 && lasttileY[player.Index] != 0)
                     {
                         if (player.TileX == lasttileX[player.Index] && player.TileY == lasttileY[player.Index])//if player is afk
                         {
                             TimePlayed[player.Index] = TimePlayed[player.Index] + 1;
                         }
-                            
-                        
+                                                  
                         lasttileX[player.Index] = player.TileX;
                         lasttileY[player.Index] = player.TileY;
                         
-
-
-
-
-                    }
-
-                   //TimePlayed[player.Index] = SqlManager.GetLastSeen(player.Name);
+                   }
                 }
             }
             if ((DateTime.UtcNow - LastCheck2).TotalSeconds >= 120)//every 2 minutes
@@ -149,7 +140,7 @@ namespace TimeCurrency
 
                     if (TimePlayed[player.Index] > 1)
                     {
-                        SqlManager.AddSeconds(player.Name, TimePlayed[player.Index]);
+                        SqlManager.AddTimePlayed(player.Name, TimePlayed[player.Index]);
                     }
                 }
             }
@@ -162,16 +153,13 @@ namespace TimeCurrency
             if (SqlManager.CheckDeadStatus(TShock.Players[who].Name))
             {
                 SqlManager.ChangeGroupToDead(TShock.Players[who].Name);
-
-
-                SqlManager.GetTimePlayed(TShock.Players[who].Name);
             }
         }
         private void OnLeave(int who)
         {
             if(TimePlayed[who] > 0)
             {
-                SqlManager.AddSeconds(TShock.Players[who].Name, TimePlayed[who]);   
+                SqlManager.AddTimePlayed(TShock.Players[who].Name, TimePlayed[who]);   
             }
         }
         #region Commands

@@ -28,7 +28,8 @@ namespace TimeCurrency
                 new SqlColumn("Name", MySqlDbType.Text),
                 new SqlColumn("Time", MySqlDbType.Int64),
                 new SqlColumn("TimePlayed", MySqlDbType.Int64),             
-                new SqlColumn("Dead", MySqlDbType.Byte)
+                new SqlColumn("Dead", MySqlDbType.Byte),
+                new SqlColumn("LastSeen", MySqlDbType.DateTime)
                 
             );
             var creator = new SqlTableCreator(db, db.GetSqlType() == SqlType.Sqlite ? (IQueryBuilder)new SqliteQueryCreator() : new MysqlQueryCreator());
@@ -82,9 +83,27 @@ namespace TimeCurrency
             {
                 Log.Error("Write to SQL exception:(TimeCurrency)");
                 Log.Error(ex.Message);
-                
             }
             return 0;
+        }
+        public static DateTime GetLastSeen(string name)
+        {
+            try
+            {
+                using (var reader = database.QueryReader("SELECT Time FROM TimeCurrency WHERE Name = @0", name))
+                {
+                    if (reader.Read())
+                        return reader.Get<DateTime>("Time");
+                }
+
+            }
+            catch (Exception ex)
+            {
+                Log.Error("Write to SQL exception:(TimeCurrency)");
+                Log.Error(ex.Message);
+                return DateTime.Now;
+            }
+            return DateTime.Now;
         }
         public static bool AddTimePlayed(string name, long seconds)
         {
