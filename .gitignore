@@ -1,0 +1,15 @@
+#Visual studio crap
+*.suo
+*.sln
+*.pdb
+bin/*.pdb
+
+#obj folder
+obj/*.*
+obj/Release/TempPE
+obj/Debug/TempPE
+obj/Release/*.*
+obj/Debug/*.*
+
+#refs folder
+refs/*.*
