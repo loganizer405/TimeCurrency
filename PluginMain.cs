@@ -4,15 +4,12 @@ using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.IO;
-using System.Timers;
 using Newtonsoft.Json;
 using MySql.Data.MySqlClient;
 using Terraria;
 using TShockAPI;
 using TShockAPI.DB;
 using Hooks;
-using System.Reflection;
-using System.Web;
 
 
 //this is a comment to see if git is working
@@ -85,6 +82,9 @@ namespace TimeCurrency
             ServerHooks.Join += OnJoin;
             ServerHooks.Leave += OnLeave;
             GameHooks.Update += OnUpdate;
+            
+            
+            
 
 
             SetupConfig();
