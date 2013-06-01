@@ -23,14 +23,10 @@ namespace TimeCurrency
         internal static string TimeCurrencyConfigFilePath { get { return Path.Combine(TShock.SavePath, "time.json"); } }
 
         DateTime LastCheck = DateTime.UtcNow;
-        DateTime LastCheck2 = DateTime.UtcNow;
-        
-
+        DateTime LastCheck2 = DateTime.UtcNow;        
         int[] lasttileX = new int[256];
         int[] lasttileY = new int[256];
         long[] TimePlayed = new long[256];
-
-
 
         public override string Author
         {
@@ -76,19 +72,12 @@ namespace TimeCurrency
             Commands.ChatCommands.Add(new Command("time.givetime", AddTime, "givetime"));
             Commands.ChatCommands.Add(new Command("time.subtracttime", SubtractTime, "subtracttime"));
 
-
-
-
             ServerHooks.Join += OnJoin;
             ServerHooks.Leave += OnLeave;
             GameHooks.Update += OnUpdate;
             
-            
-            
-
-
             SetupConfig();
-            
+
             #region Group Crap
 
             SqlManager.ChangeDeadPrefix(ConfigFile.DeadGroupPrefix);
@@ -162,8 +151,126 @@ namespace TimeCurrency
                 SqlManager.AddTimePlayed(TShock.Players[who].Name, TimePlayed[who]);   
             }
         }
+
+        bool GetTime(string str, out int time)//thanks marioE for this method
+        {
+            int seconds;
+            if (int.TryParse(str, out seconds))
+            {
+                time = seconds;
+                return true;
+            }
+
+            StringBuilder timeConv = new StringBuilder();
+            for (int i = 0; i < str.Length; i++)
+            {
+                if (char.IsDigit(str[i]) || (str[i] == '-' || str[i] == '+'))
+                {
+                    timeConv.Append(str[i]);
+                }
+                else
+                {
+                    int num;
+                    if (!int.TryParse(timeConv.ToString(), out num))
+                    {
+                        time = 0;
+                        return false;
+                    }
+                    timeConv.Clear();
+                    switch (str[i])
+                    {
+                        case 's':
+                            seconds += num;
+                            break;
+                        case 'm':
+                            seconds += num * 60;
+                            break;
+                        case 'h':
+                            seconds += num * 60 * 60;
+                            break;
+                        case 'd':
+                            seconds += num * 60 * 60 * 24;
+                            break;
+                        default:
+                            time = 0;
+                            return false;
+                    }
+                }
+            }
+            time = seconds;
+            return true;
+        }
+
         #region Commands
-        
+
+
+        void AddTime(CommandArgs args)
+        {
+            if (args.Parameters.Count != 2)
+            {
+                args.Player.SendErrorMessage("Invalid syntax! Proper syntax: /subtracttime <player> <time>");
+                args.Player.SendErrorMessage("Syntax for time: 0d0h0m0s");
+                return;
+            }
+            int time;
+
+            var player = TShock.Utils.FindPlayer(args.Parameters[0]);
+            if (player.Count == 0)
+            {
+                args.Player.SendMessage("No players matched!!", Color.OrangeRed);
+            }
+            else if (player.Count > 1)
+            {
+                args.Player.SendMessage("More than one player matched!", Color.OrangeRed);
+            }
+            else if (player.Count == 1)
+            {
+
+                if (GetTime(args.Parameters[1], out time) && time > 0)
+                {
+                    //time is the anount of seconds
+                    SqlManager.RemoveSeconds(player[0].Name, time);
+                }
+                else
+                {
+                    args.Player.SendErrorMessage("Invalid time. Syntax: 0d0h0m0s");
+                }
+            }
+        }
+        void SubtractTime(CommandArgs args)
+        {
+            if (args.Parameters.Count != 2)
+            {
+                args.Player.SendErrorMessage("Invalid syntax! Proper syntax: /givetime <player> <time>");
+                args.Player.SendErrorMessage("Syntax for time: 0d0h0m0s");
+                return;
+            }
+            int time;
+
+            var player = TShock.Utils.FindPlayer(args.Parameters[0]);
+            if (player.Count == 0)
+            {
+                args.Player.SendMessage("No players matched!!", Color.OrangeRed);
+            }
+            else if (player.Count > 1)
+            {
+                args.Player.SendMessage("More than one player matched!", Color.OrangeRed);
+            }
+            else if (player.Count == 1)
+            {
+
+                if (GetTime(args.Parameters[1], out time) && time > 0)
+                {
+                    //time is the anount of seconds
+                    SqlManager.AddSeconds(player[0].Name, time);
+                }
+                else
+                {
+                    args.Player.SendErrorMessage("Invalid time.");
+                    args.Player.SendErrorMessage("Syntax: 0d0h0m0s");
+                }
+            }
+        }
         private void CheckTime(CommandArgs args)
         {
             int time = SqlManager.ReadTime(args.Player.Name);
@@ -175,78 +282,6 @@ namespace TimeCurrency
             if (SqlManager.CheckDeadStatus(args.Player.Name))
                 args.Player.SendMessage("You are dead. Type /time dead help   for info on how to be revived.", Color.Red);
         }
-        private void AddTime(CommandArgs args)
-        {
-            if (args.Parameters.Count < 1 || args.Parameters.Count > 2)
-            {
-                args.Player.SendErrorMessage("Invalid syntax! Proper syntax: /givetime <player> <days>");
-            }
-
-            int days = 0;
-
-            var player = TShock.Utils.FindPlayer(args.Parameters[0]);
-            if (player.Count == 0)
-            {
-                args.Player.SendMessage("No players matched!!", Color.OrangeRed);
-            }
-            else if (player.Count > 1)
-            {
-                args.Player.SendMessage("More than one player matched!", Color.OrangeRed);
-            }
-            else
-            {
-                try
-                {
-                    days = Convert.ToInt32(args.Parameters[1]);
-
-                    SqlManager.AddSeconds(args.Player.Name, (days * 86400));
-                }
-                catch
-                {
-                    args.Player.SendErrorMessage("Please enter a valid integer in days!");
-                    args.Player.SendErrorMessage("Proper systax: /givetime <player> <days>");
-                }
-            }
-           
-
-
-
-        }
-        private void SubtractTime(CommandArgs args)
-        {
-            if (args.Parameters.Count < 1 || args.Parameters.Count > 2)
-            {
-                args.Player.SendErrorMessage("Invalid syntax! Proper syntax: /subtracttime <player> <days>");
-            }
-
-            int days = 0;
-
-            var player = TShock.Utils.FindPlayer(args.Parameters[0]);
-            if (player.Count == 0)
-            {
-                args.Player.SendMessage("No players matched!!", Color.OrangeRed);
-            }
-            else if (player.Count > 1)
-            {
-                args.Player.SendMessage("More than one player matched!", Color.OrangeRed);
-            }
-            else
-            {
-                try
-                {
-                    days = Convert.ToInt32(args.Parameters[1]);
-
-                    SqlManager.RemoveSeconds(args.Player.Name, (days * 86400));
-                }
-                catch
-                {
-                    args.Player.SendErrorMessage("Please enter a valid integer in days!");
-                    args.Player.SendErrorMessage("Proper systax: /subtracttime <player> <days>");
-                }
-            }
-        }
-          
-        
         
         #endregion
 
