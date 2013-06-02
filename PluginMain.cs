@@ -22,7 +22,7 @@ namespace TimeCurrency
         DateTime LastCheck2 = DateTime.UtcNow;        
         int[] lasttileX = new int[256];
         int[] lasttileY = new int[256];
-        long[] TimePlayed = new long[256];
+        int[] TimePlayed = new int[256];
 
         public override string Author
         {
@@ -63,6 +63,8 @@ namespace TimeCurrency
             ServerHooks.Join += OnJoin;
             ServerHooks.Leave += OnLeave;
             GameHooks.Update += OnUpdate;
+
+           SqlManager.EnsureTableExists(TShock.DB);//setup sql
             
           //  SetupConfig();
 
@@ -120,6 +122,10 @@ namespace TimeCurrency
         
         private void OnJoin(int who, HandledEventArgs e)//this should be onlogin but I don't have the dev buid
         {
+            if(!SqlManager.CheckForEntry(TShock.Players[who].Name))
+            {
+                SqlManager.AddUserEntry(TShock.Players[who].Name);
+            }
             /*
             //check if the person is dead
             if (SqlManager.CheckDeadStatus(TShock.Players[who].Name))
@@ -189,7 +195,7 @@ namespace TimeCurrency
 
         void CMDTime(CommandArgs args)
         {
-            if(args.Parameters.Count <= 1)
+            if(args.Parameters.Count <= 0)
             {
                 args.Player.SendErrorMessage("Invalid syntax! Proper syntax: /timec [command] <player> <time>");
                 args.Player.SendMessage("Options: add, give, remove, check", Color.Aqua);
@@ -337,7 +343,7 @@ namespace TimeCurrency
                                 {
                                     args.Player.SendErrorMessage("Please use /timec give <player> <time> to transfer time to that player's account. /time add is for admins.");
                                 }
-                                else
+                                else 
                                 {
                                     if (args.Parameters.Count != 3)
                                     {
