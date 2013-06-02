@@ -58,15 +58,15 @@ namespace TimeCurrency
         public override void Initialize ()
         {
             Commands.ChatCommands.Add(new Command(new List<string>() { "time.*", "time.default" }, CheckTime, "checktime"));
-            Commands.ChatCommands.Add(new Command(new List<string>() { "time.*", "time.default" }, CMDTime, "time"));
+            Commands.ChatCommands.Add(new Command(new List<string>() { "time.*", "time.default" }, CMDTime, "timec"));
 
             ServerHooks.Join += OnJoin;
             ServerHooks.Leave += OnLeave;
             GameHooks.Update += OnUpdate;
             
-            SetupConfig();
+          //  SetupConfig();
 
-            #region Group Crap
+           /* #region Group Crap
 
             SqlManager.ChangeDeadPrefix(ConfigFile.DeadGroupPrefix);
             
@@ -81,11 +81,10 @@ namespace TimeCurrency
                     TShock.Groups.AddPermissions(group.Name, (new List<string>() { "time.checktime", "" }));         
                 }
             }
-
-            #endregion
+            
+            #endregion*/
          
         }
-        
         void OnUpdate()
         {
             if ((DateTime.UtcNow - LastCheck).TotalSeconds >= 1)//every second
@@ -121,11 +120,13 @@ namespace TimeCurrency
         
         private void OnJoin(int who, HandledEventArgs e)//this should be onlogin but I don't have the dev buid
         {
+            /*
             //check if the person is dead
             if (SqlManager.CheckDeadStatus(TShock.Players[who].Name))
             {
                 SqlManager.ChangeGroupToDead(TShock.Players[who].Name);
             }
+             * */
         }
         private void OnLeave(int who)
         {
@@ -188,6 +189,12 @@ namespace TimeCurrency
 
         void CMDTime(CommandArgs args)
         {
+            if(args.Parameters.Count <= 1)
+            {
+                args.Player.SendErrorMessage("Invalid syntax! Proper syntax: /timec [command] <player> <time>");
+                args.Player.SendMessage("Options: add, give, remove, check", Color.Aqua);
+                args.Player.SendMessage("<player> and <time> are not needed in /timc check.", Color.Aqua);
+            }
             switch(args.Parameters[0].ToLower())
             {
                 case "give": 
@@ -204,14 +211,14 @@ namespace TimeCurrency
                                 if (args.Player.Group.HasPermission("time.addtime"))
                                 {
                                     args.Player.SendInfoMessage("Please note that you have the permission to give someone time without taking away your own time.");
-                                    args.Player.SendInfoMessage("The command is /time add <player> <time>");
-                                    args.Player.SendInfoMessage("Or, if you want to transfer your time to some elses, do /time send <player> <time>");
+                                    args.Player.SendInfoMessage("The command is /timec add <player> <time>");
+                                    args.Player.SendInfoMessage("Or, if you want to transfer your time to some elses, do /timec send <player> <time>");
                                 }
                                 else
                                 {
                                     if (args.Parameters.Count != 3)
                                     {
-                                        args.Player.SendErrorMessage("Invalid syntax! Proper syntax: /time " + args.Parameters[0] + " <player> <time>");
+                                        args.Player.SendErrorMessage("Invalid syntax! Proper syntax: /timec " + args.Parameters[0] + " <player> <time>");
                                         args.Player.SendErrorMessage("Syntax for time: 0d0h0m0s");
                                         return;
                                     }
@@ -270,7 +277,7 @@ namespace TimeCurrency
                                 
                                     if (args.Parameters.Count != 3)
                                     {
-                                        args.Player.SendErrorMessage("Invalid syntax! Proper syntax: /time send <player> <time>");
+                                        args.Player.SendErrorMessage("Invalid syntax! Proper syntax: /timec send <player> <time>");
                                         args.Player.SendErrorMessage("Syntax for time: 0d0h0m0s");
                                         return;
                                     }
@@ -328,13 +335,13 @@ namespace TimeCurrency
                             {
                                 if (!args.Player.Group.HasPermission("time.addtime"))
                                 {
-                                    args.Player.SendErrorMessage("Please use /time give <player> <time> to transfer time to that player's account. /time add is for admins.");
+                                    args.Player.SendErrorMessage("Please use /timec give <player> <time> to transfer time to that player's account. /time add is for admins.");
                                 }
                                 else
                                 {
                                     if (args.Parameters.Count != 3)
                                     {
-                                        args.Player.SendErrorMessage("Invalid syntax! Proper syntax: /time add <player> <time>");
+                                        args.Player.SendErrorMessage("Invalid syntax! Proper syntax: /timec add <player> <time>");
                                         args.Player.SendErrorMessage("Syntax for time: 0d0h0m0s");
                                         return;
                                     }
@@ -388,7 +395,7 @@ namespace TimeCurrency
                               
                                     if (args.Parameters.Count != 3)
                                     {
-                                        args.Player.SendErrorMessage("Invalid syntax! Proper syntax: /time " + args.Parameters[0] + " <player> <time>");
+                                        args.Player.SendErrorMessage("Invalid syntax! Proper syntax: /timec " + args.Parameters[0] + " <player> <time>");
                                         args.Player.SendErrorMessage("Syntax for time: 0d0h0m0s");
                                         return;
                                     }
