@@ -1,33 +1,28 @@
-﻿
-using System;
+﻿using System;
 using System.IO;
 using Newtonsoft.Json;
 
 namespace TimeCurrency
 {
-    public class TimeCurrencyConfig
+    public class TimeConfig
     {
-        
-      
-//variables go here
-        public string DeadGroupPrefix = "|Dead|";
+        //variables go here
 
-
-        public static TimeCurrencyConfig Read(string path)
+        public static TimeConfig Read(string path)
         {
             if (!File.Exists(path))
-                return new TimeCurrencyConfig();
+                return new TimeConfig();
             using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
                 return Read(fs);
             }
         }
 
-        public static TimeCurrencyConfig Read(Stream stream)
+        public static TimeConfig Read(Stream stream)
         {
             using (var sr = new StreamReader(stream))
             {
-                var cf = JsonConvert.DeserializeObject<TimeCurrencyConfig>(sr.ReadToEnd());
+                var cf = JsonConvert.DeserializeObject<TimeConfig>(sr.ReadToEnd());
                 if (ConfigRead != null)
                     ConfigRead(cf);
                 return cf;
@@ -51,6 +46,6 @@ namespace TimeCurrency
             }
         }
 
-        public static Action<TimeCurrencyConfig> ConfigRead;
+        public static Action<TimeConfig> ConfigRead;
     }
 }

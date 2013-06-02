@@ -16,7 +16,6 @@ namespace TimeCurrency
     public class SqlManager
     {
        
-
         private static IDbConnection database;
         private SqlManager()
         {
@@ -37,8 +36,7 @@ namespace TimeCurrency
             var creator = new SqlTableCreator(db, db.GetSqlType() == SqlType.Sqlite ? (IQueryBuilder)new SqliteQueryCreator() : new MysqlQueryCreator());
             creator.EnsureExists(table);
 
-        }
-        
+        }       
         public static bool AddSeconds(string name, int seconds)
         {
             try
@@ -208,7 +206,7 @@ namespace TimeCurrency
         {
             try
             {
-                database.Query("UPDATE Users SET Prefix = @0 WHERE GroupName = dead", prefix);
+                database.Query("UPDATE GroupList SET Prefix = @0 WHERE GroupName = dead", prefix);
                 return true;
             }
             catch (Exception ex)

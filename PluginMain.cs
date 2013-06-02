@@ -16,14 +16,15 @@ namespace TimeCurrency
     [APIVersion(1, 12)]
     public class TimeCurrency : TerrariaPlugin
     {
-        public static TimeCurrencyConfig ConfigFile { get; set; }
-        internal static string TimeCurrencyConfigFilePath { get { return Path.Combine(TShock.SavePath, "time.json"); } }
+        public static TimeConfig ConfigFile { get; set; }
+        internal static string TimeConfigPath { get { return Path.Combine(TShock.SavePath, "eprstiming.json"); } }
         DateTime LastCheck = DateTime.UtcNow;
         DateTime LastCheck2 = DateTime.UtcNow;        
         int[] lasttileX = new int[256];
         int[] lasttileY = new int[256];
         int[] TimePlayed = new int[256];
-
+        
+      
         public override string Author
         {
             get { return "Loganizer"; }
@@ -66,11 +67,12 @@ namespace TimeCurrency
 
            SqlManager.EnsureTableExists(TShock.DB);//setup sql
             
-          //  SetupConfig();
+            SetupConfig();
+            
+            
+            #region Group Crap
 
-           /* #region Group Crap
-
-            SqlManager.ChangeDeadPrefix(ConfigFile.DeadGroupPrefix);
+            //SqlManager.ChangeDeadPrefix(ConfigFile.DeadGroupPrefix);
             
             if(!TShock.Groups.GroupExists("dead"))
             {
@@ -84,7 +86,7 @@ namespace TimeCurrency
                 }
             }
             
-            #endregion*/
+            #endregion
          
         }
         void OnUpdate()
@@ -484,29 +486,29 @@ namespace TimeCurrency
 
 
 
-        public static bool SetupConfig()
+        public static void SetupConfig()
         {
             try
             {
-                if (File.Exists(TimeCurrencyConfigFilePath))
+                if (File.Exists(TimeConfigPath))
                 {
-                    ConfigFile = TimeCurrencyConfig.Read(TimeCurrencyConfigFilePath);
+                    ConfigFile = TimeConfig.Read(TimeConfigPath);
                 }
                 else
                 {
-                    ConfigFile.Write(TimeCurrencyConfigFilePath);
+                    ConfigFile.Write(TimeConfigPath);
+                    Console.ForegroundColor = ConsoleColor.Cyan;
+                    Console.WriteLine("Writing EPRSTiming config.");
+                    Console.ResetColor();
                 }
-                return true;
             }
-
             catch (Exception ex)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("Error in TimeCurrency config file.");
+                Console.WriteLine("Error in EPRSTiming file. Did you specify a word? If so, try a number!");
                 Console.ResetColor();
-                Log.Error("TimeCurrency Config Exception");
+                Log.Error("EPRSTiming Config Exception (EPRSTiming.Json)");
                 Log.Error(ex.ToString());
-                return false;
             }
         }
     }
