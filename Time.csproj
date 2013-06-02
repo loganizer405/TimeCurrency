@@ -37,30 +37,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SqlManager.cs" />
   </ItemGroup>
-    <ItemGroup>
-    <Reference Include="HttpServer">
-      <HintPath>refs\HttpServer.dll</HintPath>
-    </Reference>
-    <Reference Include="Mono.Data.Sqlite">
-      <HintPath>refs\Mono.Data.Sqlite.dll</HintPath>
-    </Reference>
-    <Reference Include="MySql.Data">
-      <HintPath>refs\MySql.Data.dll</HintPath>
-    </Reference>
-    <Reference Include="MySql.Web">
-      <HintPath>refs\MySql.Web.dll</HintPath>
-    </Reference>
-    <Reference Include="Newtonsoft.Json">
-      <HintPath>refs\Newtonsoft.Json.dll</HintPath>
-    </Reference>
+  <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Data" />
-    <Reference Include="TerrariaServer">
-      <HintPath>refs\TerrariaServer.exe</HintPath>
-    </Reference>
-    <Reference Include="TShockAPI">
-      <HintPath>refs\TShockAPI.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Reference Include="HttpServer, Version=2.0.0.0, Culture=neutral, PublicKeyToken=5684c2c737cd4271, processorArchitecture=MSIL">

@@ -11,9 +11,6 @@ using TShockAPI;
 using TShockAPI.DB;
 using Hooks;
 
-
-//this is a comment to see if git is working
-
 namespace TimeCurrency
 {
     [APIVersion(1, 12)]
@@ -21,7 +18,6 @@ namespace TimeCurrency
     {
         public static TimeCurrencyConfig ConfigFile { get; set; }
         internal static string TimeCurrencyConfigFilePath { get { return Path.Combine(TShock.SavePath, "time.json"); } }
-
         DateTime LastCheck = DateTime.UtcNow;
         DateTime LastCheck2 = DateTime.UtcNow;        
         int[] lasttileX = new int[256];
@@ -61,10 +57,8 @@ namespace TimeCurrency
         }
         public override void Initialize ()
         {
-            Commands.ChatCommands.Add(new Command("time.default", CheckTime, "checktime"));
-            Commands.ChatCommands.Add(new Command("time.default", AddTime, "givetime"));
-            Commands.ChatCommands.Add(new Command("time.subtracttime", SubtractTime, "subtracttime"));
-            Commands.ChatCommands.Add(new Command("time.default", CMDTime, "time"));
+            Commands.ChatCommands.Add(new Command(new List<string>() { "time.*", "time.default" }, CheckTime, "checktime"));
+            Commands.ChatCommands.Add(new Command(new List<string>() { "time.*", "time.default" }, CMDTime, "time"));
 
             ServerHooks.Join += OnJoin;
             ServerHooks.Leave += OnLeave;
@@ -194,170 +188,269 @@ namespace TimeCurrency
 
         void CMDTime(CommandArgs args)
         {
-            switch(args.Parameters[0])
+            switch(args.Parameters[0].ToLower())
             {
-                case "give":
-                    if (args.Player.IsLoggedIn)
+                case "give": 
+                case "transfer": 
                     {
-                        if (SqlManager.CheckDeadStatus(args.Player.Name))
+                        if (args.Player.IsLoggedIn)
                         {
-                            args.Player.SendErrorMessage("You cannot transfer time because you are dead.");
-                        }
-                        if (!SqlManager.CheckDeadStatus(args.Player.Name))
-                        {
-                            if (!args.Player.Group.HasPermission("time.addtime"))
+                            if (SqlManager.CheckDeadStatus(args.Player.Name))
                             {
-                                if (args.Parameters.Count != 2)
+                                args.Player.SendErrorMessage("You cannot transfer time because you are dead.");
+                            }
+                            if (!SqlManager.CheckDeadStatus(args.Player.Name))
+                            {
+                                if (args.Player.Group.HasPermission("time.addtime"))
                                 {
-                                    args.Player.SendErrorMessage("Invalid syntax! Proper syntax: /time give <player> <time>");
-                                    args.Player.SendErrorMessage("Syntax for time: 0d0h0m0s");
-                                    return;
+                                    args.Player.SendInfoMessage("Please note that you have the permission to give someone time without taking away your own time.");
+                                    args.Player.SendInfoMessage("The command is /time add <player> <time>");
+                                    args.Player.SendInfoMessage("Or, if you want to transfer your time to some elses, do /time send <player> <time>");
                                 }
-                                int time;
-
-                                var player = TShock.Utils.FindPlayer(args.Parameters[0]);
-                                if (player.Count == 0)
+                                else
                                 {
-                                    args.Player.SendMessage("No players matched!!", Color.OrangeRed);
-                                }
-                                else if (player.Count > 1)
-                                {
-                                    args.Player.SendMessage("More than one player matched!", Color.OrangeRed);
-                                }
-                                else if (player.Count == 1)
-                                {
-                                    if (GetTime(args.Parameters[1], out time) && time > 0)
+                                    if (args.Parameters.Count != 3)
                                     {
-                                        //time is the anount of seconds
+                                        args.Player.SendErrorMessage("Invalid syntax! Proper syntax: /time " + args.Parameters[0] + " <player> <time>");
+                                        args.Player.SendErrorMessage("Syntax for time: 0d0h0m0s");
+                                        return;
+                                    }
+                                    int time;
 
-                                        if (SqlManager.RemoveSeconds(args.Player.Name, time) && SqlManager.AddSeconds(player[0].Name, time))
+                                    var player = TShock.Utils.FindPlayer(args.Parameters[1]);
+                                    if (player.Count == 0)
+                                    {
+                                        args.Player.SendMessage("No players matched!!", Color.OrangeRed);
+                                    }
+                                    else if (player.Count > 1)
+                                    {
+                                        args.Player.SendMessage("More than one player matched!", Color.OrangeRed);
+                                    }
+                                    else if (player.Count == 1)
+                                    {
+                                        if (GetTime(args.Parameters[2], out time) && time > 0)
                                         {
-                                            args.Player.SendSuccessMessage("Successfully transfered " + args.Parameters[1] + " to " + player[0].Name + " 's account.");
-                                            int time2 = SqlManager.ReadTime(args.Player.Name);
-                                            if (!SqlManager.CheckDeadStatus(args.Player.Name))
+                                            //time is the anount of seconds
+
+                                            if (SqlManager.RemoveSeconds(args.Player.Name, time) && SqlManager.AddSeconds(player[0].Name, time))
                                             {
-                                                TimeSpan t = TimeSpan.FromSeconds(time2);
-                                                args.Player.SendMessage("Your currenct balance: " + t.Days + " days, " + t.Hours + " hours, " + t.Minutes + " minutes, and " + t.Seconds + " seconds.", Color.LightGreen);
+                                                args.Player.SendSuccessMessage("Successfully transfered " + args.Parameters[2] + " to " + player[0].Name + " 's account.");
+                                                int time2 = SqlManager.ReadTime(args.Player.Name);
+                                                if (!SqlManager.CheckDeadStatus(args.Player.Name))
+                                                {
+                                                    TimeSpan t = TimeSpan.FromSeconds(time2);
+                                                    args.Player.SendMessage("Your current balance: " + t.Days + " days, " + t.Hours + " hours, " + t.Minutes + " minutes, and " + t.Seconds + " seconds.", Color.LightGreen);
+                                                }
+                                            }
+                                            else
+                                            {
+                                                args.Player.SendErrorMessage("Failed to transfer " + args.Parameters[2] + " to " + player[0].Name + " 's account.");
                                             }
                                         }
                                         else
                                         {
-                                            args.Player.SendErrorMessage("Failed to transfer " + args.Parameters[1] + " to " + player[0].Name + " 's account.");
+                                            args.Player.SendErrorMessage("Invalid time. Syntax: 0d0h0m0s");
                                         }
-                                    }
-                                    else
-                                    {
-                                        args.Player.SendErrorMessage("Invalid time. Syntax: 0d0h0m0s");
                                     }
                                 }
                             }
-
                         }
-                        
-                    }
-                        
-                    
                         break;
-                default:
-                    args.Player.SendErrorMessage("Invalid argument! Proper arguments: ");
-                    break;
-              
-            }
-        }
-        void AddTime(CommandArgs args)
-        {
-            if (args.Parameters.Count != 2)
-            {
-                args.Player.SendErrorMessage("Invalid syntax! Proper syntax: /subtracttime <player> <time>");
-                args.Player.SendErrorMessage("Syntax for time: 0d0h0m0s");
-                return;
-            }
-            int time;
-
-            var player = TShock.Utils.FindPlayer(args.Parameters[0]);
-            if (player.Count == 0)
-            {
-                args.Player.SendMessage("No players matched!!", Color.OrangeRed);
-            }
-            else if (player.Count > 1)
-            {
-                args.Player.SendMessage("More than one player matched!", Color.OrangeRed);
-            }
-            else if (player.Count == 1)
-            {
-                if (args.Player.Group.HasPermission("time.add"))
-                {
-                    if (GetTime(args.Parameters[1], out time) && time > 0)
-                    {
-                        //time is the anount of seconds
-                        SqlManager.AddSeconds(player[0].Name, time);
-                        args.Player.SendSuccessMessage("Successfully transfered " + args.Parameters[1] + " to " + player[0].Name + " 's account.");
                     }
-                    else
+                case "send":
                     {
-                        args.Player.SendErrorMessage("Invalid time. Syntax: 0d0h0m0s");
-                    }
-                }
-                else 
-                {
-                    if (GetTime(args.Parameters[1], out time) && time > 0)
-                    {
-                        //time is the anount of seconds
-                        if (SqlManager.RemoveSeconds(args.Player.Name, time) && SqlManager.AddSeconds(player[0].Name, time))
+                        if (args.Player.IsLoggedIn)
                         {
-                            args.Player.SendSuccessMessage("Successfully transfered " + args.Parameters[1] + " to " + player[0].Name + " 's account.");
-                             int time2 = SqlManager.ReadTime(args.Player.Name);
-                             if (!SqlManager.CheckDeadStatus(args.Player.Name))
-                             {
-                                 TimeSpan t = TimeSpan.FromSeconds(time2);
-                                 args.Player.SendMessage("Your currenct balance: " + t.Days + " days, " + t.Hours + " hours, " + t.Minutes + " minutes, and " + t.Seconds + " seconds.", Color.LightGreen);
-                             }
+                            if (SqlManager.CheckDeadStatus(args.Player.Name))
+                            {
+                                args.Player.SendErrorMessage("You cannot transfer time because you are dead.");
+                            }
+                            if (!SqlManager.CheckDeadStatus(args.Player.Name))
+                            {
+                                
+                                    if (args.Parameters.Count != 3)
+                                    {
+                                        args.Player.SendErrorMessage("Invalid syntax! Proper syntax: /time send <player> <time>");
+                                        args.Player.SendErrorMessage("Syntax for time: 0d0h0m0s");
+                                        return;
+                                    }
+                                    int time;
+
+                                    var player = TShock.Utils.FindPlayer(args.Parameters[1]);
+                                    if (player.Count == 0)
+                                    {
+                                        args.Player.SendMessage("No players matched!!", Color.OrangeRed);
+                                    }
+                                    else if (player.Count > 1)
+                                    {
+                                        args.Player.SendMessage("More than one player matched!", Color.OrangeRed);
+                                    }
+                                    else if (player.Count == 1)
+                                    {
+                                        if (GetTime(args.Parameters[2], out time) && time > 0)
+                                        {
+                                            //time is the anount of seconds
+
+                                            if (SqlManager.RemoveSeconds(args.Player.Name, time) && SqlManager.AddSeconds(player[0].Name, time))
+                                            {
+                                                args.Player.SendSuccessMessage("Successfully transfered " + args.Parameters[2] + " to " + player[0].Name + " 's account.");
+                                                int time2 = SqlManager.ReadTime(args.Player.Name);
+                                                if (!SqlManager.CheckDeadStatus(args.Player.Name))
+                                                {
+                                                    TimeSpan t = TimeSpan.FromSeconds(time2);
+                                                    args.Player.SendMessage("Your current balance: " + t.Days + " days, " + t.Hours + " hours, " + t.Minutes + " minutes, and " + t.Seconds + " seconds.", Color.LightGreen);
+                                                }
+                                            }
+                                            else
+                                            {
+                                                args.Player.SendErrorMessage("Failed to transfer " + args.Parameters[2] + " to " + player[0].Name + " 's account.");
+                                            }
+                                        }
+                                        else
+                                        {
+                                            args.Player.SendErrorMessage("Invalid time. Syntax: 0d0h0m0s");
+                                        }
+                                    }
+                                }
                         }
+                        break;
+                    }
+                case "add": 
+                    {
+                        if (args.Player.IsLoggedIn)
+                        {
+                            if (SqlManager.CheckDeadStatus(args.Player.Name))
+                            {
+                                args.Player.SendErrorMessage("You cannot send time because you are dead.");
+                                return;
+                            }
+                            if (!SqlManager.CheckDeadStatus(args.Player.Name))
+                            {
+                                if (!args.Player.Group.HasPermission("time.addtime"))
+                                {
+                                    args.Player.SendErrorMessage("Please use /time give <player> <time> to transfer time to that player's account. /time add is for admins.");
+                                }
+                                else
+                                {
+                                    if (args.Parameters.Count != 3)
+                                    {
+                                        args.Player.SendErrorMessage("Invalid syntax! Proper syntax: /time add <player> <time>");
+                                        args.Player.SendErrorMessage("Syntax for time: 0d0h0m0s");
+                                        return;
+                                    }
+                                    int time;
+
+                                    var player = TShock.Utils.FindPlayer(args.Parameters[1]);
+                                    if (player.Count == 0)
+                                    {
+                                        args.Player.SendMessage("No players matched!!", Color.OrangeRed);
+                                    }
+                                    else if (player.Count > 1)
+                                    {
+                                        args.Player.SendMessage("More than one player matched!", Color.OrangeRed);
+                                    }
+                                    else if (player.Count == 1)
+                                    {
+                                        if (GetTime(args.Parameters[1], out time) && time > 0)
+                                        {
+                                            //time is the anount of seconds
+
+                                            if (SqlManager.AddSeconds(player[0].Name, time))
+                                            {
+                                                args.Player.SendSuccessMessage("Successfully transfered " + args.Parameters[2] + " to " + player[0].Name + " 's account.");
+                                                int time2 = SqlManager.ReadTime(args.Player.Name);
+                                                if (!SqlManager.CheckDeadStatus(args.Player.Name))
+                                                {
+                                                    TimeSpan t = TimeSpan.FromSeconds(time2);
+                                                    args.Player.SendMessage("Your current balance: " + t.Days + " days, " + t.Hours + " hours, " + t.Minutes + " minutes, and " + t.Seconds + " seconds.", Color.LightGreen);
+                                                }
+                                            }
+                                            else
+                                            {
+                                                args.Player.SendErrorMessage("Failed to transfer " + args.Parameters[2] + " to " + player[0].Name + " 's account.");
+                                            }
+                                        }
+                                        else
+                                        {
+                                            args.Player.SendErrorMessage("Invalid time. Syntax: 0d0h0m0s");
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        break;
+                    }
+                case "remove":
+                case "subtract":
+                    {
+                        if (args.Player.IsLoggedIn && args.Player.Group.HasPermission("time.remove"))
+                        {
+                              
+                                    if (args.Parameters.Count != 3)
+                                    {
+                                        args.Player.SendErrorMessage("Invalid syntax! Proper syntax: /time " + args.Parameters[0] + " <player> <time>");
+                                        args.Player.SendErrorMessage("Syntax for time: 0d0h0m0s");
+                                        return;
+                                    }
+                                    int time;
+
+                                    var player = TShock.Utils.FindPlayer(args.Parameters[1]);
+                                    if (player.Count == 0)
+                                    {
+                                        args.Player.SendMessage("No players matched!!", Color.OrangeRed);
+                                    }
+                                    else if (player.Count > 1)
+                                    {
+                                        args.Player.SendMessage("More than one player matched!", Color.OrangeRed);
+                                    }
+                                    else if (player.Count == 1)
+                                    {
+                                        if (GetTime(args.Parameters[2], out time) && time > 0)
+                                        {
+                                            //time is the anount of seconds
+
+                                            if (SqlManager.RemoveSeconds(player[0].Name, time))
+                                            {
+                                                args.Player.SendSuccessMessage("Successfully removed " + args.Parameters[2] + " from " + player[0].Name + " 's account.");
+                                                
+                                            }
+                                            else
+                                            {
+                                                args.Player.SendErrorMessage("Failed to remove " + args.Parameters[2] + " from " + player[0].Name + " 's account.");
+                                            }
+                                        }
+                                        else
+                                        {
+                                            args.Player.SendErrorMessage("Invalid time. Syntax: 0d0h0m0s");
+                                        }
+                                    }
+                                }
+                         
                         else
                         {
-                            args.Player.SendErrorMessage("Failed to transfer " + args.Parameters[1] + " to " + player[0].Name + " 's account.");
+                            args.Player.SendErrorMessage("You do not have permission to do that command.");
                         }
+                        break;
                     }
-                    else
+                case "check":
                     {
-                        args.Player.SendErrorMessage("Invalid time. Syntax: 0d0h0m0s");
+                        int time = SqlManager.ReadTime(args.Player.Name);
+                        if (!SqlManager.CheckDeadStatus(args.Player.Name))
+                        {
+                            TimeSpan t = TimeSpan.FromSeconds(time);
+                            args.Player.SendMessage("You have " + t.Days + " days, " + t.Hours + " hours, " + t.Minutes + " minutes, and " + t.Seconds + " seconds left.", Color.LightGreen);
+                        }
+                        if (SqlManager.CheckDeadStatus(args.Player.Name))
+                        {
+                            args.Player.SendMessage("You are dead. Ask an admin for info on reviving.", Color.Red);
+                        }
+                        break;
                     }
-                }
-
-            }
-        }
-        void SubtractTime(CommandArgs args)
-        {
-            if (args.Parameters.Count != 2)
-            {
-                args.Player.SendErrorMessage("Invalid syntax! Proper syntax: /givetime <player> <time>");
-                args.Player.SendErrorMessage("Syntax for time: 0d0h0m0s");
-                return;
-            }
-            int time;
-
-            var player = TShock.Utils.FindPlayer(args.Parameters[0]);
-            if (player.Count == 0)
-            {
-                args.Player.SendMessage("No players matched!!", Color.OrangeRed);
-            }
-            else if (player.Count > 1)
-            {
-                args.Player.SendMessage("More than one player matched!", Color.OrangeRed);
-            }
-            else if (player.Count == 1)
-            {
-
-                if (GetTime(args.Parameters[1], out time) && time > 0)
-                {
-                    //time is the anount of seconds
-                    SqlManager.AddSeconds(player[0].Name, time);
-                }
-                else
-                {
-                    args.Player.SendErrorMessage("Invalid time.");
-                    args.Player.SendErrorMessage("Syntax: 0d0h0m0s");
-                }
+                default:
+                    {
+                        args.Player.SendErrorMessage("Invalid argument! Proper arguments:");
+                        break;
+                    }
             }
         }
         private void CheckTime(CommandArgs args)
@@ -369,7 +462,7 @@ namespace TimeCurrency
                 args.Player.SendMessage("You have " + t.Days + " days, " + t.Hours + " hours, " + t.Minutes + " minutes, and " + t.Seconds + " seconds left.", Color.LightGreen);
             }
             if (SqlManager.CheckDeadStatus(args.Player.Name))
-                args.Player.SendMessage("You are dead. Type /time dead help   for info on how to be revived.", Color.Red);
+                args.Player.SendMessage("You are dead. Ask an admin on how to be revived.", Color.Red);
         }
         
         #endregion
