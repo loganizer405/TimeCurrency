@@ -5,8 +5,8 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Time")]
-[assembly: AssemblyDescription("Currency for tshock.")]
+[assembly: AssemblyTitle("TimeCurrency")]
+[assembly: AssemblyDescription("A currency for tshock.")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("Currency")]
