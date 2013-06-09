@@ -17,7 +17,6 @@ namespace TimeCurrency
                 return Read(fs);
             }
         }
-
         public static TimeConfig Read(Stream stream)
         {
             using (var sr = new StreamReader(stream))
@@ -28,7 +27,6 @@ namespace TimeCurrency
                 return cf;
             }
         }
-
         public void Write(string path)
         {
             using (var fs = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.Write))
@@ -36,7 +34,6 @@ namespace TimeCurrency
                 Write(fs);
             }
         }
-
         public void Write(Stream stream)
         {
             var str = JsonConvert.SerializeObject(this, Formatting.Indented);
@@ -45,7 +42,6 @@ namespace TimeCurrency
                 sw.Write(str);
             }
         }
-
         public static Action<TimeConfig> ConfigRead;
     }
 }

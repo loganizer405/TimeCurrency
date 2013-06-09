@@ -17,7 +17,7 @@ namespace TimeCurrency
     public class TimeCurrency : TerrariaPlugin
     {
         public static TimeConfig ConfigFile { get; set; }
-        internal static string TimeConfigPath { get { return Path.Combine(TShock.SavePath, "eprstiming.json"); } }
+        internal static string TimeConfigPath { get { return Path.Combine(TShock.SavePath, "time.json"); } }
         DateTime LastCheck = DateTime.UtcNow;
         DateTime LastCheck2 = DateTime.UtcNow;        
         int[] lasttileX = new int[256];
@@ -65,11 +65,10 @@ namespace TimeCurrency
             ServerHooks.Leave += OnLeave;
             GameHooks.Update += OnUpdate;
 
-           SqlManager.EnsureTableExists(TShock.DB);//setup sql
-            
-            SetupConfig();
-            
-            
+            SqlManager.EnsureTableExists(TShock.DB);//setup sql        
+
+            //SetupConfig();
+                     
             #region Group Crap
 
             //SqlManager.ChangeDeadPrefix(ConfigFile.DeadGroupPrefix);
@@ -100,7 +99,7 @@ namespace TimeCurrency
                     {
                         if (player.TileX == lasttileX[player.Index] && player.TileY == lasttileY[player.Index])//if player is afk
                         {
-                            TimePlayed[player.Index] = TimePlayed[player.Index] + 1;
+                            TimePlayed[player.Index] = TimePlayed[player.Index] - 1;
                         }                                              
                             lasttileX[player.Index] = player.TileX;
                             lasttileY[player.Index] = player.TileY;                      
@@ -201,7 +200,7 @@ namespace TimeCurrency
             {
                 args.Player.SendErrorMessage("Invalid syntax! Proper syntax: /timec [command] <player> <time>");
                 args.Player.SendMessage("Options: add, give, remove, check", Color.Aqua);
-                args.Player.SendMessage("<player> and <time> are not needed in /timc check.", Color.Aqua);
+                args.Player.SendMessage("<player> and <time> are not needed in /timec check.", Color.Aqua);
             }
             switch(args.Parameters[0].ToLower())
             {
@@ -426,8 +425,7 @@ namespace TimeCurrency
 
                                             if (SqlManager.RemoveSeconds(player[0].Name, time))
                                             {
-                                                args.Player.SendSuccessMessage("Successfully removed " + args.Parameters[2] + " from " + player[0].Name + " 's account.");
-                                                
+                                                args.Player.SendSuccessMessage("Successfully removed " + args.Parameters[2] + " from " + player[0].Name + " 's account.");                                               
                                             }
                                             else
                                             {
@@ -443,7 +441,7 @@ namespace TimeCurrency
                          
                         else
                         {
-                            args.Player.SendErrorMessage("You do not have permission to do that command.");
+                            args.Player.SendErrorMessage("You do not have access to that command.");
                         }
                         break;
                     }
@@ -461,12 +459,59 @@ namespace TimeCurrency
                         }
                         break;
                     }
+                case "reload":
+                case "configreload":
+                    {
+                        if (!args.Player.Group.HasPermission("time.reload"))
+                        {
+                            args.Player.SendErrorMessage("You do not have access to that command");
+                            return;
+                        }
+                        else
+                        {
+                            if (SetupConfig())
+                            {
+                                args.Player.SendSuccessMessage("Config file reloaded successfully");
+                            }
+                            else
+                            {
+                                args.Player.SendErrorMessage("Failed to reload TimeCurrency config. Check logs for more details.");
+                            }
+                            break;
+                        }
+                    }
+                case "help":
                 default:
                     {
-                        args.Player.SendErrorMessage("Invalid argument! Proper arguments:");
+                        if (args.Parameters[0] == "help")
+                        {
+                            args.Player.SendMessage("Proper syntax: /timec [option] <player> <time>", Color.LightSalmon);
+                        }
+                        else
+                        {
+                            args.Player.SendErrorMessage("Invalid syntax/argument! Proper syntax: /timec [command] <player> <time>");
+                        }
+                            if (args.Player.Group.HasPermission("time.reload") || args.Player.Group.HasPermission("time.*"))
+                            {
+                                args.Player.SendMessage("Options: add, give, remove, check, reload", Color.LightSalmon);
+                                args.Player.SendMessage("<player> and <time> are not needed in /timec check or /timec reload.", Color.LightSalmon);
+                                return;
+                            }
+                            if (args.Player.Group.HasPermission("time.remove") || args.Player.Group.HasPermission("time.*"))
+                            {
+                                args.Player.SendMessage("Options: add, give, remove, check, reload", Color.LightSalmon);
+                                args.Player.SendMessage("<player> and <time> are not needed in /timec check or /timec reload.", Color.LightSalmon);
+                                return;
+                            }
+                            else
+                            {
+                                args.Player.SendMessage("Options: add, give, check", Color.LightSalmon);
+                                args.Player.SendMessage("<player> and <time> are not needed in /timec check.", Color.LightSalmon);
+                            }
+                            
+                        }
                         break;
                     }
-            }
         }
         private void CheckTime(CommandArgs args)
         {
@@ -482,11 +527,7 @@ namespace TimeCurrency
         
         #endregion
 
-
-
-
-
-        public static void SetupConfig()
+        public static bool SetupConfig()
         {
             try
             {
@@ -497,18 +538,17 @@ namespace TimeCurrency
                 else
                 {
                     ConfigFile.Write(TimeConfigPath);
-                    Console.ForegroundColor = ConsoleColor.Cyan;
-                    Console.WriteLine("Writing EPRSTiming config.");
-                    Console.ResetColor();
                 }
+                return true;
             }
             catch (Exception ex)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("Error in EPRSTiming file. Did you specify a word? If so, try a number!");
+                Console.WriteLine("Error in TimeCurrency config file! Check logs for more details.");
                 Console.ResetColor();
-                Log.Error("EPRSTiming Config Exception (EPRSTiming.Json)");
+                Log.Error("TimeCurrency Config Exception (time.json)");
                 Log.Error(ex.ToString());
+                return false;
             }
         }
     }
