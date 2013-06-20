@@ -22,9 +22,9 @@ namespace TimeCurrency
         DateTime LastCheck2 = DateTime.UtcNow;        
         int[] lasttileX = new int[256];
         int[] lasttileY = new int[256];
+        bool[] afk = new bool[256];
         int[] TimePlayed = new int[256];
-        
-      
+ 
         public override string Author
         {
             get { return "Loganizer"; }
@@ -60,6 +60,7 @@ namespace TimeCurrency
         {
             Commands.ChatCommands.Add(new Command(new List<string>() { "time.*", "time.default" }, CheckTime, "checktime"));
             Commands.ChatCommands.Add(new Command(new List<string>() { "time.*", "time.default" }, CMDTime, "timec"));
+            Commands.ChatCommands.Add(new Command(new List<string>() { "time.*", "time.checkplayed" }, CheckTimePlayed, "checktimeplayed"));
 
             ServerHooks.Join += OnJoin;
             ServerHooks.Leave += OnLeave;
@@ -93,7 +94,24 @@ namespace TimeCurrency
             if ((DateTime.UtcNow - LastCheck).TotalSeconds >= 1)//every second
             {
                 LastCheck = DateTime.UtcNow;
-                foreach(TSPlayer player in TShock.Players)
+                foreach (TSPlayer player in TShock.Players)
+                {
+                    if (player.TileX == lasttileX[player.Index] && player.TileY == lasttileY[player.Index])//if player is afk
+                    {
+                        TimePlayed[player.Index] = TimePlayed[player.Index] - 1;
+                        afk[player.Index] = true;
+                    }
+                    else
+                    {
+                        afk[player.Index] = false;
+                    }
+                    lasttileX[player.Index] = player.TileX;
+                    lasttileY[player.Index] = player.TileY;       
+                }
+                
+                
+                
+                /*foreach(TSPlayer player in TShock.Players)
                 {
                     if (lasttileX[player.Index] != 0 && lasttileY[player.Index] != 0)
                     {
@@ -106,6 +124,7 @@ namespace TimeCurrency
                    }
                 }
             }
+                
             if ((DateTime.UtcNow - LastCheck2).TotalSeconds >= 120)//every 2 minutes
             {
                 LastCheck2 = DateTime.UtcNow;
@@ -116,7 +135,7 @@ namespace TimeCurrency
                     {
                         SqlManager.AddTimePlayed(player.Name, TimePlayed[player.Index]);
                     }
-                }
+                }*/
             }
             
         }
@@ -248,7 +267,7 @@ namespace TimeCurrency
 
                                             if (SqlManager.RemoveSeconds(args.Player.Name, time) && SqlManager.AddSeconds(player[0].Name, time))
                                             {
-                                                args.Player.SendSuccessMessage("Successfully transfered " + args.Parameters[2] + " to " + player[0].Name + " 's account.");
+                                                args.Player.SendSuccessMessage("Successfully transfered " + args.Parameters[2] + " to " + player[0].Name + "'s account.");
                                                 int time2 = SqlManager.ReadTime(args.Player.Name);
                                                 if (!SqlManager.CheckDeadStatus(args.Player.Name))
                                                 {
@@ -258,7 +277,7 @@ namespace TimeCurrency
                                             }
                                             else
                                             {
-                                                args.Player.SendErrorMessage("Failed to transfer " + args.Parameters[2] + " to " + player[0].Name + " 's account.");
+                                                args.Player.SendErrorMessage("Failed to transfer " + args.Parameters[2] + " to " + player[0].Name + "'s account.");
                                             }
                                         }
                                         else
@@ -307,7 +326,7 @@ namespace TimeCurrency
 
                                             if (SqlManager.RemoveSeconds(args.Player.Name, time) && SqlManager.AddSeconds(player[0].Name, time))
                                             {
-                                                args.Player.SendSuccessMessage("Successfully transfered " + args.Parameters[2] + " to " + player[0].Name + " 's account.");
+                                                args.Player.SendSuccessMessage("Successfully transfered " + args.Parameters[2] + " to " + player[0].Name + "'s account.");
                                                 int time2 = SqlManager.ReadTime(args.Player.Name);
                                                 if (!SqlManager.CheckDeadStatus(args.Player.Name))
                                                 {
@@ -317,7 +336,7 @@ namespace TimeCurrency
                                             }
                                             else
                                             {
-                                                args.Player.SendErrorMessage("Failed to transfer " + args.Parameters[2] + " to " + player[0].Name + " 's account.");
+                                                args.Player.SendErrorMessage("Failed to transfer " + args.Parameters[2] + " to " + player[0].Name + "'s account.");
                                             }
                                         }
                                         else
@@ -365,23 +384,18 @@ namespace TimeCurrency
                                     }
                                     else if (player.Count == 1)
                                     {
-                                        if (GetTime(args.Parameters[1], out time) && time > 0)
+                                        if (GetTime(args.Parameters[1], out time))
                                         {
                                             //time is the anount of seconds
 
                                             if (SqlManager.AddSeconds(player[0].Name, time))
                                             {
-                                                args.Player.SendSuccessMessage("Successfully transfered " + args.Parameters[2] + " to " + player[0].Name + " 's account.");
+                                                args.Player.SendSuccessMessage("Successfully gave" + args.Parameters[2] + " to " + player[0].Name + "'s account.");
                                                 int time2 = SqlManager.ReadTime(args.Player.Name);
-                                                if (!SqlManager.CheckDeadStatus(args.Player.Name))
-                                                {
-                                                    TimeSpan t = TimeSpan.FromSeconds(time2);
-                                                    args.Player.SendMessage("Your current balance: " + t.Days + " days, " + t.Hours + " hours, " + t.Minutes + " minutes, and " + t.Seconds + " seconds.", Color.LightGreen);
-                                                }
                                             }
                                             else
                                             {
-                                                args.Player.SendErrorMessage("Failed to transfer " + args.Parameters[2] + " to " + player[0].Name + " 's account.");
+                                                args.Player.SendErrorMessage("Failed to give " + args.Parameters[2] + " to " + player[0].Name + "'s account.");
                                             }
                                         }
                                         else
@@ -425,11 +439,11 @@ namespace TimeCurrency
 
                                             if (SqlManager.RemoveSeconds(player[0].Name, time))
                                             {
-                                                args.Player.SendSuccessMessage("Successfully removed " + args.Parameters[2] + " from " + player[0].Name + " 's account.");                                               
+                                                args.Player.SendSuccessMessage("Successfully removed " + args.Parameters[2] + " from " + player[0].Name + "'s account.");                                               
                                             }
                                             else
                                             {
-                                                args.Player.SendErrorMessage("Failed to remove " + args.Parameters[2] + " from " + player[0].Name + " 's account.");
+                                                args.Player.SendErrorMessage("Failed to remove " + args.Parameters[2] + " from " + player[0].Name + "'s account.");
                                             }
                                         }
                                         else
@@ -512,6 +526,33 @@ namespace TimeCurrency
                         }
                         break;
                     }
+        }
+        void CheckTimePlayed(CommandArgs args)
+        {
+            if (args.Parameters.Count > 0 && (args.Player.Group.HasPermission("time.checktimeplayedop") || args.Player.Group.HasPermission("time.*")))
+            {
+                var player = TShock.Utils.FindPlayer(args.Parameters[1]);
+                if (player.Count == 0)
+                {
+                    args.Player.SendMessage("No players matched!", Color.OrangeRed);
+                }
+                if (player.Count > 1)
+                {
+                    args.Player.SendMessage("More than one player matched!", Color.OrangeRed);
+                }
+                if (player.Count == 1)
+                {
+                    int time = SqlManager.GetTimePlayed(player[0].Name);
+                    TimeSpan t = TimeSpan.FromSeconds(time);
+                    args.Player.SendMessage(player[0].Name + " has played for " + t.Days + " days, " + t.Hours + " hours, " + t.Minutes + " minutes, and " + t.Seconds + " seconds.", Color.LightGreen);
+                }
+            }
+            else
+            {
+                int time = SqlManager.GetTimePlayed(args.Player.Name);
+                TimeSpan t = TimeSpan.FromSeconds(time);
+                args.Player.SendMessage("You have played for " + t.Days + " days, " + t.Hours + " hours, " + t.Minutes + " minutes, and " + t.Seconds + " seconds.", Color.LightGreen);
+            }
         }
         private void CheckTime(CommandArgs args)
         {

@@ -77,18 +77,19 @@ namespace TimeCurrency
                 {
                     if (reader.Read())
                         stuff = reader.Get<string>("Name");
-                    if (!reader.Read())
+                    /*if (!reader.Read())
                     {
                         Log.Error("Write to SQL exception:(TimeCurrency)");
                         return true;
-                    }
+                    }*/
                     if (stuff == "" || stuff == null)
                     {
                         return false;
                     }
                     else
                     {
-                        return true;
+                        throw new Exception("Failed to write to sql database");
+                        
                     }
                 }
             }
@@ -164,7 +165,7 @@ namespace TimeCurrency
                 return false;
             }
         }
-        public static long GetTimePlayed(string name)
+        public static int GetTimePlayed(string name)
         {
             try
             {
@@ -172,7 +173,7 @@ namespace TimeCurrency
                 {
                     if (reader.Read())
                     {
-                        return reader.Get<long>("TimePlayed");
+                        return reader.Get<int>("TimePlayed");
                     }
                     else
                     {
