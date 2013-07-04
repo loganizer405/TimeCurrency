@@ -16,8 +16,9 @@ namespace TimeCurrency
     [APIVersion(1, 12)]
     public class TimeCurrency : TerrariaPlugin
     {
-        public static TimeConfig ConfigFile { get; set; }
-        internal static string TimeConfigPath { get { return Path.Combine(TShock.SavePath, "time.json"); } }
+        public static TimeConfig Config { get; set; }
+        internal static string ConfigPath { get { return Path.Combine(TShock.SavePath, "Time.json"); } }
+        
         DateTime LastCheck = DateTime.UtcNow;
         DateTime LastCheck2 = DateTime.UtcNow;        
         int[] lasttileX = new int[256];
@@ -66,28 +67,28 @@ namespace TimeCurrency
             ServerHooks.Leave += OnLeave;
             GameHooks.Update += OnUpdate;
 
-            SqlManager.EnsureTableExists(TShock.DB);//setup sql        
+            SqlManager.EnsureTableExists(TShock.DB);     
 
-            //SetupConfig();
-                     
-            #region Group Crap
+            Config = new TimeConfig();
+            SetupConfig();
 
-            //SqlManager.ChangeDeadPrefix(ConfigFile.DeadGroupPrefix);
-            
-            if(!TShock.Groups.GroupExists("dead"))
+            if (!TShock.Groups.GroupExists("dead"))
             {
-                TShock.Groups.AddGroup("dead", "default", "", "255,255,255", false);
-            }                    
+                TShock.Groups.AddGroup("dead", TShock.Config.DefaultRegistrationGroupName, "", Config.DeadGroupColor, false);
+            }
+            else
+            {
+                TShock.Groups.GetGroupByName("dead").ChatColor = Config.DeadGroupColor;
+                TShock.Groups.GetGroupByName("dead").Prefix = Config.DeadGroupPrefix;
+                TShock.Groups.GetGroupByName("dead").Suffix = Config.DeadGroupSuffix;
+            }
             foreach (Group group in TShock.Groups)
             {
-                if (group.Name != "superadmin")
+                if (group.Name != "superadmin" && group.Name != TShock.Config.DefaultGuestGroupName)
                 {                   
-                    TShock.Groups.AddPermissions(group.Name, (new List<string>() { "time.checktime", "" }));         
+                    TShock.Groups.AddPermissions(group.Name, (new List<string>() { "time.checkplayed", "time.default" }));         
                 }
-            }
-            
-            #endregion
-         
+            }       
         }
         void OnUpdate()
         {
@@ -98,48 +99,30 @@ namespace TimeCurrency
                 {
                     if (player.TileX == lasttileX[player.Index] && player.TileY == lasttileY[player.Index])//if player is afk
                     {
-                        TimePlayed[player.Index] = TimePlayed[player.Index] - 1;
+                        TimePlayed[player.Index]--;
                         afk[player.Index] = true;
                     }
                     else
                     {
+                        TimePlayed[player.Index]++;
                         afk[player.Index] = false;
                     }
                     lasttileX[player.Index] = player.TileX;
-                    lasttileY[player.Index] = player.TileY;       
-                }
-                
-                
-                
-                /*foreach(TSPlayer player in TShock.Players)
-                {
-                    if (lasttileX[player.Index] != 0 && lasttileY[player.Index] != 0)
-                    {
-                        if (player.TileX == lasttileX[player.Index] && player.TileY == lasttileY[player.Index])//if player is afk
-                        {
-                            TimePlayed[player.Index] = TimePlayed[player.Index] - 1;
-                        }                                              
-                            lasttileX[player.Index] = player.TileX;
-                            lasttileY[player.Index] = player.TileY;                      
-                   }
+                    lasttileY[player.Index] = player.TileY;
                 }
             }
-                
             if ((DateTime.UtcNow - LastCheck2).TotalSeconds >= 120)//every 2 minutes
             {
                 LastCheck2 = DateTime.UtcNow;
                 foreach (TSPlayer player in TShock.Players)
                 {
-
                     if (TimePlayed[player.Index] > 1)
                     {
                         SqlManager.AddTimePlayed(player.Name, TimePlayed[player.Index]);
                     }
-                }*/
+                }
             }
-            
         }
-        
         private void OnJoin(int who, HandledEventArgs e)//this should be onlogin but I don't have the dev buid
         {
             if(!SqlManager.CheckForEntry(TShock.Players[who].Name))
@@ -160,6 +143,13 @@ namespace TimeCurrency
             {
                 SqlManager.AddTimePlayed(TShock.Players[who].Name, TimePlayed[who]);   
             }
+
+
+       
+           // TConfig.derp = false;
+
+
+
         }
 
         bool GetTime(string str, out int time)//thanks marioE for this method
@@ -473,6 +463,12 @@ namespace TimeCurrency
                         }
                         break;
                     }
+                case "rank":
+                case "rankup":
+                case "rankcheck":
+                    {
+                        break;
+                    }
                 case "reload":
                 case "configreload":
                     {
@@ -567,27 +563,24 @@ namespace TimeCurrency
         }
         
         #endregion
-
+        
         public static bool SetupConfig()
         {
             try
             {
-                if (File.Exists(TimeConfigPath))
-                {
-                    ConfigFile = TimeConfig.Read(TimeConfigPath);
-                }
-                else
-                {
-                    ConfigFile.Write(TimeConfigPath);
-                }
+                if (File.Exists(ConfigPath))
+                    Config = TimeConfig.Read(ConfigPath);
+                else          
+                    Config.Write(ConfigPath); 
+                
                 return true;
             }
             catch (Exception ex)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("Error in TimeCurrency config file! Check logs for more details.");
+                Console.WriteLine("Error in TimeCurrency config (Time.json)! Check logs for more details.");
                 Console.ResetColor();
-                Log.Error("TimeCurrency Config Exception (time.json)");
+                Log.Error("Error in TimeCurrency config (Time.json):");
                 Log.Error(ex.ToString());
                 return false;
             }

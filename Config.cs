@@ -1,12 +1,20 @@
 ﻿using System;
 using System.IO;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using Newtonsoft.Json;
+using TShockAPI;
+using Terraria;
 
 namespace TimeCurrency
 {
     public class TimeConfig
     {
-        //variables go here
+        //public variables go here not static
+        public string DeadGroupPrefix = "(Dead)";
+        public string DeadGroupSuffix = "";
+        public string DeadGroupColor = "255,255,255";
 
         public static TimeConfig Read(string path)
         {
@@ -22,8 +30,8 @@ namespace TimeCurrency
             using (var sr = new StreamReader(stream))
             {
                 var cf = JsonConvert.DeserializeObject<TimeConfig>(sr.ReadToEnd());
-                if (ConfigRead != null)
-                    ConfigRead(cf);
+                if (TimeConfigRead != null)
+                    TimeConfigRead(cf);
                 return cf;
             }
         }
@@ -42,6 +50,6 @@ namespace TimeCurrency
                 sw.Write(str);
             }
         }
-        public static Action<TimeConfig> ConfigRead;
+        public static Action<TimeConfig> TimeConfigRead;
     }
 }

@@ -23,17 +23,19 @@ namespace TimeCurrency
         public static void EnsureTableExists(IDbConnection db)
         {
             database = db;
-
+           
             var table = new SqlTable("TimeCurrency",
-
                 new SqlColumn("Name", MySqlDbType.Text),
                 new SqlColumn("Time", MySqlDbType.Int32),
                 new SqlColumn("TimePlayed", MySqlDbType.Int32),             
                 new SqlColumn("Dead", MySqlDbType.Int32),
-                new SqlColumn("LastSeen", MySqlDbType.Text)
-                
+                new SqlColumn("LastSeen", MySqlDbType.Text)             
             );
-            var creator = new SqlTableCreator(db, db.GetSqlType() == SqlType.Sqlite ? (IQueryBuilder)new SqliteQueryCreator() : new MysqlQueryCreator());
+            var creator = new SqlTableCreator(db,
+             db.GetSqlType() == SqlType.Sqlite
+             ? (IQueryBuilder)new SqliteQueryCreator()
+             : new MysqlQueryCreator());
+
             creator.EnsureExists(table);
 
         }       
@@ -194,20 +196,6 @@ namespace TimeCurrency
             try
             {
                 database.Query("UPDATE TimeCurrency SET Dead = 1 WHERE Name = @0", name);
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Log.Error("Write to SQL exception:(TimeCurrency)");
-                Log.Error(ex.Message);
-                return false;
-            }
-        }
-        public static bool ChangeDeadPrefix(string prefix)
-        {
-            try
-            {
-                database.Query("UPDATE GroupList SET Prefix = @0 WHERE GroupName = dead", prefix);
                 return true;
             }
             catch (Exception ex)
