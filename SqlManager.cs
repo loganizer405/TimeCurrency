@@ -50,7 +50,7 @@ namespace TimeCurrency
             catch (Exception ex)
             {
                 Log.Error("Write to SQL exception:(TimeCurrency)");
-                Log.Error(ex.Message);
+                Log.Error(ex.ToString());
                 return false;
                 
             }
@@ -65,7 +65,7 @@ namespace TimeCurrency
             catch (Exception ex)
             {
                 Log.Error("Write to SQL exception:(TimeCurrency)");
-                Log.Error(ex.Message);
+                Log.Error(ex.ToString());
                 return false;
 
             }
@@ -98,7 +98,7 @@ namespace TimeCurrency
             catch (Exception ex)
             {
                 Log.Error("Write to SQL exception:(TimeCurrency)");
-                Log.Error(ex.Message);
+                Log.Error(ex.ToString());
                 return true;
             }
         }
@@ -112,7 +112,7 @@ namespace TimeCurrency
             catch (Exception ex)
             {
                 Log.Error("Write to SQL exception:(TimeCurrency)");
-                Log.Error(ex.Message);
+                Log.Error(ex.ToString());
                 return false;
             }
         }
@@ -130,7 +130,7 @@ namespace TimeCurrency
             catch (Exception ex)
             {
                 Log.Error("Write to SQL exception:(TimeCurrency)");
-                Log.Error(ex.Message);
+                Log.Error(ex.ToString());
             }
             return 0;
         }
@@ -148,7 +148,7 @@ namespace TimeCurrency
             catch (Exception ex)
             {
                 Log.Error("Write to SQL exception:(TimeCurrency)");
-                Log.Error(ex.Message);
+                Log.Error(ex.ToString());
                 return null;
             }
             return null;
@@ -163,7 +163,7 @@ namespace TimeCurrency
             catch (Exception ex)
             {
                 Log.Error("Write to SQL exception:(TimeCurrency)");
-                Log.Error(ex.Message);
+                Log.Error(ex.ToString());
                 return false;
             }
         }
@@ -186,7 +186,7 @@ namespace TimeCurrency
             catch (Exception ex)
             {
                 Log.Error("Write to SQL exception:(TimeCurrency)");
-                Log.Error(ex.Message);
+                Log.Error(ex.ToString());
                 return 0;
             }
 
@@ -201,7 +201,7 @@ namespace TimeCurrency
             catch (Exception ex)
             {
                 Log.Error("Write to SQL exception:(TimeCurrency)");
-                Log.Error(ex.Message);
+                Log.Error(ex.ToString());
                 return false;
             }
         }
@@ -215,7 +215,7 @@ namespace TimeCurrency
             catch (Exception ex)
             {
                 Log.Error("Write to SQL exception:(TimeCurrency)");
-                Log.Error(ex.Message);
+                Log.Error(ex.ToString());
                 return false;
             }
         }
@@ -251,7 +251,7 @@ namespace TimeCurrency
             catch (Exception ex)
             {
                 Log.Error("Write to SQL exception:(TimeCurrency)");
-                Log.Error(ex.Message);
+                Log.Error(ex.ToString());
                 return false;
             }
         }
