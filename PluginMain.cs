@@ -64,6 +64,7 @@ namespace TimeCurrency
             Commands.ChatCommands.Add(new Command(new List<string>() { "time.*", "time.default" }, CMDTime, "timec"));
             Commands.ChatCommands.Add(new Command(new List<string>() { "time.*", "time.checkplayed" }, CheckTimePlayed, "checktimeplayed"));
 
+            
             ServerHooks.Join += OnJoin;
             ServerHooks.Leave += OnLeave;
             GameHooks.Update += OnUpdate;
@@ -114,11 +115,23 @@ namespace TimeCurrency
             if ((DateTime.UtcNow - LastCheck2).TotalSeconds >= 120)//every 2 minutes
             {
                 LastCheck2 = DateTime.UtcNow;
+
+
+
+
+
+
+
                 foreach (Player player in Players)
                 {
                     if (player.timeplayed > 1)
                     {
                         SqlManager.AddTimePlayed(player.TSPlayer.Name, player.timeplayed);
+                        player.timeplayed = 0;
+                    }
+                    if (player.timeplayed < 0)
+                    {
+                        SqlManager.RemoveSeconds(player.TSPlayer.Name, -player.timeplayed);//is that the negative modifier?
                     }
                 }
             }
@@ -130,7 +143,35 @@ namespace TimeCurrency
 
             if(!SqlManager.CheckForEntry(Players[who].TSPlayer.Name))
             {
-                SqlManager.AddUserEntry(Players[who].TSPlayer.Name);
+                SqlManager.AddUserEntry(Players[who].TSPlayer.Name, DateTime.Now.ToString());
+            }
+            if (Config.ShowBalanceOnLogin)
+            {
+                TimeSpan t = TimeSpan.FromSeconds(SqlManager.ReadTime(Players[who].TSPlayer.Name));
+                Players[who].TSPlayer.SendMessage(Config.ShowBalanceTemplate
+                    .Replace("{days}", t.Days.ToString())
+                    .Replace("{hours}", t.Hours.ToString())
+                    .Replace("{minutes}", t.Minutes.ToString())
+                    .Replace("{seconds}", t.Seconds.ToString()),
+                    Color.LightSalmon);
+            }
+            DateTime time;
+            try
+            {
+                time = Convert.ToDateTime(SqlManager.GetLastSeen(Players[who].TSPlayer.Name));
+                if (time >= DateTime.Now)//if after the week on dead lock...
+                {
+                    Players[who].deadlock = false;
+                }
+                else//if it is deadlock
+                {
+                    Players[who].deadlock = true;
+                }
+            }
+            catch(Exception ex)
+            {
+                Log.Error("Failure in SQL database while converting \"LastSeen\" to DateTime.");
+                Log.Error(ex.ToString());
             }
             /*
             //check if the person is dead
@@ -146,15 +187,8 @@ namespace TimeCurrency
 
             if(timeplayed[who] > 0)
             {
-                SqlManager.AddTimePlayed(TShock.Players[who].Name, timeplayed[who]);   
+                SqlManager.AddTimePlayed(Players[who].TSPlayer.Name, Players[who].timeplayed);   
             }
-
-
-       
-           // TConfig.derp = false;
-
-
-
         }
 
         bool GetTime(string str, out int time)//thanks marioE for this method

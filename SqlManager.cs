@@ -102,11 +102,11 @@ namespace TimeCurrency
                 return true;
             }
         }
-        public static bool AddUserEntry(string name)
+        public static bool AddUserEntry(string name, string lastseen)
         {
             try
             {
-                database.Query("INSERT INTO TImeCurrency (Name, Time, TimePlayed, Dead, LastSeen) VALUES (@0, 604800, 0, 0, @1)", name, DateTime.Now.ToString());
+                database.Query("INSERT INTO TimeCurrency (Name, Time, TimePlayed, Dead, LastSeen) VALUES (@0, 604800, 0, 0, @1)", name, lastseen);
                 return true;
             }
             catch (Exception ex)
@@ -189,7 +189,6 @@ namespace TimeCurrency
                 Log.Error(ex.ToString());
                 return 0;
             }
-
         }
         public static bool KillPlayer(string name)
         {

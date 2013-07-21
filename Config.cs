@@ -15,6 +15,8 @@ namespace TimeCurrency
         public string DeadGroupPrefix = "(Dead)";
         public string DeadGroupSuffix = "";
         public string DeadGroupColor = "255,255,255";
+        public bool ShowBalanceOnLogin = false;
+        public string ShowBalanceTemplate = "Welcome, you have {days}, {hours}, {minutes}, and {seconds} of time in your account.";
 
         public static TimeConfig Read(string path)
         {

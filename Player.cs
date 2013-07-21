@@ -14,6 +14,8 @@ namespace TimeCurrency
         public int lasttileY { get; set; }
         public bool afk { get; set; }
         public int timeplayed { get; set; }
+        public bool deadlock { get; set; }
+        public bool lowbal { get; set; }
 
         public Player(int index)
         {
