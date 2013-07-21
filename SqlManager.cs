@@ -167,6 +167,20 @@ namespace TimeCurrency
                 return false;
             }
         }
+        public static bool RemoveTimePlayed(string name, int seconds)
+        {
+            try
+            {
+                database.Query("UPDATE TimeCurrency SET TimePlayed = TimePlayed - @0 WHERE Name = @1", seconds, name);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Log.Error("Write to SQL exception:(TimeCurrency)");
+                Log.Error(ex.ToString());
+                return false;
+            }
+        }
         public static int GetTimePlayed(string name)
         {
             try

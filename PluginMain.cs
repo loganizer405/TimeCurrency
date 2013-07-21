@@ -21,7 +21,8 @@ namespace TimeCurrency
         public static List<Player> Players = new List<Player>();
 
         DateTime LastCheck = DateTime.UtcNow;
-        DateTime LastCheck2 = DateTime.UtcNow;        
+        DateTime LastCheck2 = DateTime.UtcNow;
+//        DateTime LastCheck3 = DateTime.UtcNow;
         int[] lasttileX = new int[256];
         int[] lasttileY = new int[256];
         bool[] afk = new bool[256];
@@ -33,7 +34,7 @@ namespace TimeCurrency
         }
         public override string Description
         {
-            get { return "Has a currency of time."; }
+            get { return "Adds a currency of time."; }
         }
         public override string Name
         {
@@ -43,7 +44,6 @@ namespace TimeCurrency
         {
             get { return new Version("1.0"); }
         }
-
         public TimeCurrency(Main game)
             : base(game)
         {
@@ -97,43 +97,49 @@ namespace TimeCurrency
                 LastCheck = DateTime.UtcNow;
                 foreach (Player player in Players)
                 {
-  
-                    if (player.TSPlayer.TileX == player.lasttileX && player.TSPlayer.TileY == player.lasttileY)//if player is afk
+                    if (player.TSPlayer.IsLoggedIn)
                     {
-                        player.timeplayed--;
-                        player.afk = true;
+                        if (player.TSPlayer.TileX == player.lasttileX && player.TSPlayer.TileY == player.lasttileY)//if player is afk
+                        {
+                            player.timeplayed--;
+                            player.afk = true;
+                        }
+                        else
+                        {
+                            player.timeplayed++;
+                            player.afk = false;
+                        }
+                        player.lasttileX = player.TSPlayer.TileX;
+                        player.lasttileY = player.TSPlayer.TileY;
                     }
-                    else
-                    {
-                        player.timeplayed++;
-                        player.afk = false;
-                    }
-                    player.lasttileX = player.TSPlayer.TileX;
-                    player.lasttileY = player.TSPlayer.TileY;
                 }
             }
             if ((DateTime.UtcNow - LastCheck2).TotalSeconds >= 120)//every 2 minutes
             {
                 LastCheck2 = DateTime.UtcNow;
-
-
-
-
-
-
-
                 foreach (Player player in Players)
                 {
-                    if (player.timeplayed > 1)
+                    if (player.TSPlayer.IsLoggedIn)
                     {
-                        SqlManager.AddTimePlayed(player.TSPlayer.Name, player.timeplayed);
-                        player.timeplayed = 0;
-                    }
-                    if (player.timeplayed < 0)
-                    {
-                        SqlManager.RemoveSeconds(player.TSPlayer.Name, -player.timeplayed);//is that the negative modifier?
+                        if (player.timeplayed > 1)
+                        {
+                            SqlManager.AddTimePlayed(player.TSPlayer.Name, player.timeplayed);
+                            player.timeplayed = 0;
+                        }
+                        if (player.timeplayed < 0)
+                        {
+                            SqlManager.RemoveSeconds(player.TSPlayer.Name, -player.timeplayed);//is that the negative modifier?
+                            player.timeplayed = 0;
+                        }
+                        if (SqlManager.ReadTime(player.TSPlayer.Name) <= 0)
+                            SqlManager.KillPlayer(player.TSPlayer.Name);
                     }
                 }
+              //  if ((DateTime.UtcNow - LastCheck3).TotalMinutes >= 60)//every hour
+              //  {
+              //      LastCheck3 = DateTime.UtcNow;
+              //
+              //  }
             }
         }
         private void OnJoin(int who, HandledEventArgs e)//this should be onlogin but I don't have the dev buid
@@ -163,7 +169,7 @@ namespace TimeCurrency
                 {
                     Players[who].deadlock = false;
                 }
-                else//if it is deadlock
+                else//if it is the deadlock period
                 {
                     Players[who].deadlock = true;
                 }
@@ -183,14 +189,16 @@ namespace TimeCurrency
         }
         private void OnLeave(int who)
         {
-            Players.RemoveAt(who);
-
-            if(timeplayed[who] > 0)
+            if (timeplayed[who] > 0)
             {
-                SqlManager.AddTimePlayed(Players[who].TSPlayer.Name, Players[who].timeplayed);   
+                SqlManager.AddTimePlayed(Players[who].TSPlayer.Name, Players[who].timeplayed);
             }
+            else
+            {
+                SqlManager.RemoveTimePlayed(Players[who].TSPlayer.Name, -Players[who].timeplayed);
+            }
+            Players.RemoveAt(who);
         }
-
         bool GetTime(string str, out int time)//thanks marioE for this method
         {
             int seconds;
@@ -260,14 +268,13 @@ namespace TimeCurrency
                             if (SqlManager.CheckDeadStatus(args.Player.Name))
                             {
                                 args.Player.SendErrorMessage("You cannot transfer time because you are dead.");
+                                return;
                             }
-                            if (!SqlManager.CheckDeadStatus(args.Player.Name))
-                            {
                                 if (args.Player.Group.HasPermission("time.addtime"))
                                 {
                                     args.Player.SendInfoMessage("Please note that you have the permission to give someone time without taking away your own time.");
                                     args.Player.SendInfoMessage("The command is /timec add <player> <time>");
-                                    args.Player.SendInfoMessage("Or, if you want to transfer your time to some elses, do /timec send <player> <time>");
+                                    args.Player.SendInfoMessage("Or, if you want to transfer your time to someone else, do /timec send <player> <time>");
                                 }
                                 else
                                 {
@@ -316,7 +323,6 @@ namespace TimeCurrency
                                     }
                                 }
                             }
-                        }
                         break;
                     }
                 case "send":
@@ -329,7 +335,7 @@ namespace TimeCurrency
                             }
                             if (!SqlManager.CheckDeadStatus(args.Player.Name))
                             {                          
-                                    if (args.Parameters.Count != 3)
+                                    if (args.Parameters.Count != 2)
                                     {
                                         args.Player.SendErrorMessage("Invalid syntax! Proper syntax: /timec send <player> <time>");
                                         args.Player.SendErrorMessage("Syntax for time: 0d0h0m0s");
@@ -526,15 +532,18 @@ namespace TimeCurrency
                     }
                 case "helpme":
                 case "help":
+                case "commands":
                 default:
                     {
+                        if(args.Player.IsLoggedIn)
+                        {
                         if (args.Parameters[0] == "help")
                         {
-                            args.Player.SendMessage("Proper syntax: /timec <command> [player] [time]", Color.LightSalmon);
+                            args.Player.SendMessage("Proper syntax: /timec <option> [player] [time]", Color.LightSalmon);
                         }
                         else
                         {
-                            args.Player.SendErrorMessage("Invalid syntax/argument! Proper syntax: /timec <command> [player] [time]");
+                            args.Player.SendErrorMessage("Invalid syntax/argument! Proper syntax: /timec <option> [player] [time]");
                         }
                             if (args.Player.Group.HasPermission("time.reload") || args.Player.Group.HasPermission("time.*"))
                             {
@@ -553,6 +562,7 @@ namespace TimeCurrency
                                 args.Player.SendMessage("Options: add, give, check", Color.LightSalmon);
                                 args.Player.SendMessage("<player> and <time> are not needed in /timec check.", Color.LightSalmon);
                             }
+                        }
                             
                         }
                         break;
@@ -560,30 +570,38 @@ namespace TimeCurrency
         }
         void CheckTimePlayed(CommandArgs args)
         {
-            if (args.Parameters.Count > 0 && (args.Player.Group.HasPermission("time.checktimeplayedop") || args.Player.Group.HasPermission("time.*")))
+            if (!SqlManager.CheckDeadStatus(args.Player.Name))
             {
-                var player = TShock.Utils.FindPlayer(args.Parameters[1]);
-                if (player.Count == 0)
+                if (args.Parameters.Count > 0 && (args.Player.Group.HasPermission("time.checktimeplayedop") || args.Player.Group.HasPermission("time.*")))
                 {
-                    args.Player.SendMessage("No players matched!", Color.OrangeRed);
-                    return;
+                    var player = TShock.Utils.FindPlayer(args.Parameters[1]);
+                    if (player.Count == 0)
+                    {
+                        args.Player.SendMessage("No players matched!", Color.OrangeRed);
+                        return;
+                    }
+                    if (player.Count > 1)
+                    {
+                        args.Player.SendMessage("More than one player matched!", Color.OrangeRed);
+                        return;
+                    }
+                    if (player.Count == 1)
+                    {
+                        TimeSpan t = TimeSpan.FromSeconds(SqlManager.GetTimePlayed(player[0].Name));
+                        args.Player.SendMessage(player[0].Name + " has played for " + t.Days + " days, " + t.Hours + " hours, " + t.Minutes + " minutes, and " + t.Seconds + " seconds.", Color.LightGreen);
+                    }
                 }
-                if (player.Count > 1)
+                else
                 {
-                    args.Player.SendMessage("More than one player matched!", Color.OrangeRed);
-                    return;
-                }
-                if (player.Count == 1)
-                {
-                    TimeSpan t = TimeSpan.FromSeconds(SqlManager.GetTimePlayed(player[0].Name));
-                    args.Player.SendMessage(player[0].Name + " has played for " + t.Days + " days, " + t.Hours + " hours, " + t.Minutes + " minutes, and " + t.Seconds + " seconds.", Color.LightGreen);
+                    if (args.Player.IsLoggedIn)
+                    {
+                        TimeSpan t = TimeSpan.FromSeconds(SqlManager.GetTimePlayed(args.Player.Name));
+                        args.Player.SendMessage("You have played for " + t.Days + " days, " + t.Hours + " hours, " + t.Minutes + " minutes, and " + t.Seconds + " seconds.", Color.LightGreen);
+                    }
                 }
             }
             else
-            {
-                TimeSpan t = TimeSpan.FromSeconds(SqlManager.GetTimePlayed(args.Player.Name));
-                args.Player.SendMessage("You have played for " + t.Days + " days, " + t.Hours + " hours, " + t.Minutes + " minutes, and " + t.Seconds + " seconds.", Color.LightGreen);
-            }
+                args.Player.SendMessage("You are dead. Ask an admin on how to be revived.", Color.Red);
         }
         private void CheckTime(CommandArgs args)
         {
