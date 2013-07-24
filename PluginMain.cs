@@ -13,7 +13,7 @@ using Hooks;
 
 namespace TimeCurrency
 {
-    [APIVersion(1, 12)]
+    [APIVersion(1, 13)]
     public class TimeCurrency : TerrariaPlugin
     {
         public static TimeConfig Config { get; set; }
@@ -142,11 +142,11 @@ namespace TimeCurrency
               //  }
             }
         }
-        private void OnJoin(int who, HandledEventArgs e)//this should be onlogin but I don't have the dev buid
+        private void OnJoin(int who, HandledEventArgs e)
         {
             lock (Players)
                 Players.Add(new Player(who));
-
+            //here down should be OnLogin
             if(!SqlManager.CheckForEntry(Players[who].TSPlayer.Name))
             {
                 SqlManager.AddUserEntry(Players[who].TSPlayer.Name, DateTime.Now.ToString());
@@ -173,19 +173,20 @@ namespace TimeCurrency
                 {
                     Players[who].deadlock = true;
                 }
+                int seconds = Convert.ToInt32((DateTime.Now - time).TotalSeconds);
+                SqlManager.RemoveSeconds(Players[who].TSPlayer.Name, seconds);
             }
             catch(Exception ex)
             {
                 Log.Error("Failure in SQL database while converting \"LastSeen\" to DateTime.");
                 Log.Error(ex.ToString());
             }
-            /*
-            //check if the person is dead
-            if (SqlManager.CheckDeadStatus(TShock.Players[who].Name))
+            
+
+            if (SqlManager.CheckDeadStatus(Players[who].TSPlayer.Name))
             {
-                SqlManager.ChangeGroupToDead(TShock.Players[who].Name);
+                SqlManager.ChangeGroupToDead(Players[who].TSPlayer.Name);
             }
-             * */
         }
         private void OnLeave(int who)
         {

@@ -46,7 +46,7 @@
       <ExecutableExtension>.exe</ExecutableExtension>
       <HintPath>refs\TerrariaServer.exe</HintPath>
     </Reference>
-    <Reference Include="TShockAPI, Version=4.1.0.419, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="TShockAPI, Version=4.0.0.923, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>refs\TShockAPI.dll</HintPath>
     </Reference>
