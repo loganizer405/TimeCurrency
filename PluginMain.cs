@@ -181,7 +181,6 @@ namespace TimeCurrency
                 Log.Error("Failure in SQL database while converting \"LastSeen\" to DateTime.");
                 Log.Error(ex.ToString());
             }
-            
 
             if (SqlManager.CheckDeadStatus(Players[who].TSPlayer.Name))
             {
