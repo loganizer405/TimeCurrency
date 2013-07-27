@@ -55,7 +55,8 @@ namespace TimeCurrency
             {
                 ServerHooks.Join -= OnJoin;
                 ServerHooks.Leave -= OnLeave;
-                GameHooks.Update -= OnUpdate; 
+                GameHooks.Update -= OnUpdate;
+                ServerHooks.Chat -= OnChat;
             }
         }
         public override void Initialize ()
@@ -68,6 +69,7 @@ namespace TimeCurrency
             ServerHooks.Join += OnJoin;
             ServerHooks.Leave += OnLeave;
             GameHooks.Update += OnUpdate;
+            ServerHooks.Chat += OnChat;
 
             SqlManager.EnsureTableExists(TShock.DB);     
 
@@ -142,12 +144,19 @@ namespace TimeCurrency
               //  }
             }
         }
-        private void OnJoin(int who, HandledEventArgs e)
+        public void OnChat(messageBuffer buffer, int who, string text, HandledEventArgs args)
         {
-            lock (Players)
-                Players.Add(new Player(who));
-            //here down should be OnLogin
-            if(!SqlManager.CheckForEntry(Players[who].TSPlayer.Name))
+            if (text.StartsWith("/login"))//I don't have the dev build so I made my own OnLogin event...
+            {
+                if (TShock.Players[who].IsLoggedIn)//if the login succeeded...
+                {
+                    OnLogin(who);
+                }
+            }
+        }
+        void OnLogin(int who)
+        {
+            if (!SqlManager.CheckForEntry(Players[who].TSPlayer.Name))
             {
                 SqlManager.AddUserEntry(Players[who].TSPlayer.Name, DateTime.Now.ToString());
             }
@@ -176,7 +185,7 @@ namespace TimeCurrency
                 int seconds = Convert.ToInt32((DateTime.Now - time).TotalSeconds);
                 SqlManager.RemoveSeconds(Players[who].TSPlayer.Name, seconds);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Log.Error("Failure in SQL database while converting \"LastSeen\" to DateTime.");
                 Log.Error(ex.ToString());
@@ -186,6 +195,11 @@ namespace TimeCurrency
             {
                 SqlManager.ChangeGroupToDead(Players[who].TSPlayer.Name);
             }
+        }
+        private void OnJoin(int who, HandledEventArgs e)
+        {
+            lock (Players)
+                Players.Add(new Player(who));
         }
         private void OnLeave(int who)
         {
